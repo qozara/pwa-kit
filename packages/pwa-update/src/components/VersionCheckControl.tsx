@@ -25,17 +25,28 @@ export interface VersionCheckControlClassNames {
   updateButton?: string;
 }
 
+export type CheckIconSlot = React.ReactNode | ((state: { isChecking: boolean }) => React.ReactNode);
+export type UpdateIconSlot = React.ReactNode | ((state: { isUpdating: boolean }) => React.ReactNode);
+export type StatusIconSlot =
+  | React.ReactNode
+  | ((result: AppUpdateCheckResult | null, needRefresh: boolean) => React.ReactNode);
+
 export interface VersionCheckControlProps {
   manager?: PwaUpdateManager;
   version?: string;
   labels?: VersionCheckControlLabels;
   classNames?: VersionCheckControlClassNames;
-  checkIcon?: React.ReactNode;
-  updateIcon?: React.ReactNode;
-  statusIcon?: React.ReactNode;
+  checkIcon?: CheckIconSlot;
+  updateIcon?: UpdateIconSlot;
+  statusIcon?: StatusIconSlot;
   disabled?: boolean;
   showStatus?: boolean;
   onCheckComplete?: (result: AppUpdateCheckResult) => void;
+  ids?: {
+    root?: string;
+    checkButton?: string;
+    updateButton?: string;
+  };
   testIds?: {
     root?: string;
     versionText?: string;
@@ -63,6 +74,7 @@ export function VersionCheckControl({
   disabled = false,
   showStatus = true,
   onCheckComplete,
+  ids,
   testIds,
 }: VersionCheckControlProps) {
   const {
@@ -104,8 +116,18 @@ export function VersionCheckControl({
     }
   }
 
+  const resolvedCheckIcon = typeof checkIcon === 'function' ? checkIcon({ isChecking }) : checkIcon;
+  const resolvedUpdateIcon =
+    typeof updateIcon === 'function' ? updateIcon({ isUpdating }) : updateIcon;
+  const resolvedStatusIcon =
+    typeof statusIcon === 'function' ? statusIcon(lastCheckResult, needRefresh) : statusIcon;
+
   return (
-    <div data-testid={testIds?.root ?? 'pwa-version-control'} className={classNames?.root}>
+    <div
+      id={ids?.root}
+      data-testid={testIds?.root ?? 'pwa-version-control'}
+      className={classNames?.root}
+    >
       <div className={classNames?.versionRow}>
         <span data-testid={testIds?.versionText ?? 'pwa-version-text'} className={classNames?.versionText}>
           {versionText}
@@ -118,7 +140,7 @@ export function VersionCheckControl({
             aria-live="polite"
             className={classNames?.statusText}
           >
-            {statusIcon}
+            {resolvedStatusIcon}
             {statusMessage}
           </span>
         ) : null}
@@ -127,12 +149,13 @@ export function VersionCheckControl({
       {needRefresh ? (
         <button
           type="button"
+          id={ids?.updateButton}
           data-testid={testIds?.updateButton ?? 'pwa-update-button'}
           disabled={isUpdating}
           onClick={() => void applyUpdate()}
           className={classNames?.updateButton}
         >
-          {updateIcon}
+          {resolvedUpdateIcon}
           <span>
             {isUpdating
               ? (labels?.updating ?? labels?.updateNow ?? 'Updating...')
@@ -142,12 +165,13 @@ export function VersionCheckControl({
       ) : (
         <button
           type="button"
+          id={ids?.checkButton}
           data-testid={testIds?.checkButton ?? 'pwa-check-button'}
           disabled={disabled || isChecking}
           onClick={() => void handleCheck()}
           className={classNames?.checkButton}
         >
-          {checkIcon}
+          {resolvedCheckIcon}
           <span>
             {isChecking
               ? (labels?.checking ?? 'Checking...')
