@@ -17,6 +17,7 @@ export type { PwaUpdateProviderProps } from './react.js';
 
 export { PwaUpdateBanner } from './components/PwaUpdateBanner.js';
 export type {
+  BannerIconSlot,
   PwaUpdateBannerProps,
   PwaUpdateBannerLabels,
   PwaUpdateBannerClassNames,
@@ -24,6 +25,9 @@ export type {
 
 export { VersionCheckControl } from './components/VersionCheckControl.js';
 export type {
+  CheckIconSlot,
+  UpdateIconSlot,
+  StatusIconSlot,
   VersionCheckControlProps,
   VersionCheckControlLabels,
   VersionCheckControlClassNames,

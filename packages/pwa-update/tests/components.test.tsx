@@ -204,5 +204,81 @@ describe('Optional PWA UI Components', () => {
       );
       expect((screen.getByTestId('pwa-check-button') as HTMLButtonElement).disabled).toBe(true);
     });
+
+    it('supports custom DOM ids and render-function icons on banner and version control', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ version: '156003f' }), { status: 200 })
+      );
+      const manager = createTracked({
+        currentVersion: '263c0d5',
+        swGracePeriodMs: 10,
+        reloadFallbackMs: 20,
+        fetchImpl: fetchMock as unknown as typeof fetch,
+        onReload: vi.fn(),
+      });
+
+      render(
+        <div>
+          <PwaUpdateBanner
+            manager={manager}
+            ids={{
+              root: 'custom-banner-id',
+              reloadButton: 'btn-pwa-update-reload',
+              dismissButton: 'btn-pwa-update-dismiss',
+            }}
+            icon={({ isUpdating }) => (
+              <span data-testid="banner-icon">{isUpdating ? 'spinning' : 'idle'}</span>
+            )}
+            reloadIcon={({ isUpdating }) => (
+              <span data-testid="banner-reload-icon">{isUpdating ? 'busy' : 'ready'}</span>
+            )}
+          />
+          <VersionCheckControl
+            manager={manager}
+            ids={{
+              root: 'custom-version-id',
+              checkButton: 'btn-check-app-update',
+              updateButton: 'btn-install-app-update',
+            }}
+            checkIcon={({ isChecking }) => (
+              <span data-testid="check-icon">{isChecking ? 'checking-icon' : 'idle-icon'}</span>
+            )}
+            updateIcon={({ isUpdating }) => (
+              <span data-testid="update-icon">{isUpdating ? 'updating-icon' : 'ready-icon'}</span>
+            )}
+            statusIcon={(result, needRefresh) => (
+              <span data-testid="status-icon">
+                {`${result ?? 'none'}:${String(needRefresh)}`}
+              </span>
+            )}
+          />
+        </div>
+      );
+
+      expect(document.getElementById('custom-version-id')).toBeTruthy();
+      expect(document.getElementById('btn-check-app-update')).toBeTruthy();
+      expect(screen.getByTestId('check-icon').textContent).toBe('idle-icon');
+
+      await act(async () => {
+        fireEvent.click(document.getElementById('btn-check-app-update')!);
+      });
+
+      expect(document.getElementById('custom-banner-id')).toBeTruthy();
+      expect(document.getElementById('btn-pwa-update-reload')).toBeTruthy();
+      expect(document.getElementById('btn-pwa-update-dismiss')).toBeTruthy();
+      expect(screen.getByTestId('banner-icon').textContent).toBe('idle');
+      expect(screen.getByTestId('banner-reload-icon').textContent).toBe('ready');
+
+      expect(document.getElementById('btn-install-app-update')).toBeTruthy();
+      expect(screen.getByTestId('update-icon').textContent).toBe('ready-icon');
+      expect(screen.getByTestId('status-icon').textContent).toBe('update_available:true');
+
+      await act(async () => {
+        fireEvent.click(document.getElementById('btn-install-app-update')!);
+      });
+      expect(screen.getByTestId('banner-icon').textContent).toBe('spinning');
+      expect(screen.getByTestId('banner-reload-icon').textContent).toBe('busy');
+      expect(screen.getByTestId('update-icon').textContent).toBe('updating-icon');
+    });
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@qozara/pwa-vite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vite plugin for build-time git version injection, no-cache version.json manifest emission, and Workbox/Vercel caching helpers.",
   "publishConfig": {
     "access": "public"

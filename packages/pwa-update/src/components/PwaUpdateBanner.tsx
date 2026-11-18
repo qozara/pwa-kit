@@ -24,15 +24,22 @@ export interface PwaUpdateBannerClassNames {
   dismissButton?: string;
 }
 
+export type BannerIconSlot = React.ReactNode | ((state: { isUpdating: boolean }) => React.ReactNode);
+
 export interface PwaUpdateBannerProps {
   manager?: PwaUpdateManager;
   labels?: PwaUpdateBannerLabels;
   classNames?: PwaUpdateBannerClassNames;
-  icon?: React.ReactNode;
-  reloadIcon?: React.ReactNode;
+  icon?: BannerIconSlot;
+  reloadIcon?: BannerIconSlot;
   dismissIcon?: React.ReactNode;
   showAvailableVersion?: boolean;
   hideDismiss?: boolean;
+  ids?: {
+    root?: string;
+    reloadButton?: string;
+    dismissButton?: string;
+  };
   testIds?: {
     root?: string;
     reloadButton?: string;
@@ -49,6 +56,7 @@ export function PwaUpdateBanner({
   dismissIcon,
   showAvailableVersion = false,
   hideDismiss = false,
+  ids,
   testIds,
 }: PwaUpdateBannerProps) {
   const {
@@ -64,6 +72,10 @@ export function PwaUpdateBanner({
     return null;
   }
 
+  const resolvedIcon = typeof icon === 'function' ? icon({ isUpdating }) : icon;
+  const resolvedReloadIcon =
+    typeof reloadIcon === 'function' ? reloadIcon({ isUpdating }) : reloadIcon;
+
   const title = labels?.title ?? 'Update Available';
   const description = labels?.description ?? 'A new version is ready to install.';
   const versionPrefix = labels?.availableVersionPrefix ?? 'v';
@@ -74,13 +86,14 @@ export function PwaUpdateBanner({
 
   return (
     <div
+      id={ids?.root}
       data-testid={testIds?.root ?? 'pwa-update-banner'}
       role="status"
       aria-live="polite"
       className={classNames?.root}
     >
       <div className={classNames?.content}>
-        {icon ? <div className={classNames?.iconWrapper}>{icon}</div> : null}
+        {resolvedIcon ? <div className={classNames?.iconWrapper}>{resolvedIcon}</div> : null}
         <div className={classNames?.textWrapper}>
           <h4 className={classNames?.title}>{title}</h4>
           <p className={classNames?.description}>
@@ -99,18 +112,20 @@ export function PwaUpdateBanner({
       <div className={classNames?.actions}>
         <button
           type="button"
+          id={ids?.reloadButton}
           data-testid={testIds?.reloadButton ?? 'pwa-update-reload'}
           disabled={isUpdating}
           onClick={() => void applyUpdate()}
           className={classNames?.reloadButton}
         >
-          {reloadIcon}
+          {resolvedReloadIcon}
           <span>{reloadLabel}</span>
         </button>
 
         {!hideDismiss ? (
           <button
             type="button"
+            id={ids?.dismissButton}
             data-testid={testIds?.dismissButton ?? 'pwa-update-dismiss'}
             disabled={isUpdating}
             onClick={() => dismissPrompt()}
