@@ -315,7 +315,11 @@ export class PwaUpdateManager {
     registration: ServiceWorkerRegistration
   ): Promise<boolean> {
     if (worker.state === 'installed') {
-      return Boolean(registration.waiting || navigator.serviceWorker?.controller || registration.active);
+      return Boolean(
+        registration.waiting ||
+          (typeof navigator !== 'undefined' && navigator.serviceWorker?.controller) ||
+          registration.active
+      );
     }
     if (worker.state === 'redundant' || worker.state === 'activated') {
       return Boolean(registration.waiting);
@@ -355,12 +359,13 @@ export class PwaUpdateManager {
   }
 
   private async runSwUpdate(): Promise<SwUpdateOutcome> {
-    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
-      return 'unsupported';
-    }
-
     let reg = this.swRegistration;
-    if (!reg && typeof navigator.serviceWorker.getRegistration === 'function') {
+    if (
+      !reg &&
+      typeof navigator !== 'undefined' &&
+      'serviceWorker' in navigator &&
+      typeof navigator.serviceWorker?.getRegistration === 'function'
+    ) {
       const regRace = await raceWithTimeout(
         navigator.serviceWorker.getRegistration().catch(() => undefined),
         this.config.swTimeoutMs,
@@ -490,6 +495,10 @@ export class PwaUpdateManager {
       }
       if (typeof window !== 'undefined') {
         window.removeEventListener('vite:preloadError', handlePreloadError);
+      }
+      if (this.fallbackReloadTimer !== null) {
+        clearTimeout(this.fallbackReloadTimer);
+        this.fallbackReloadTimer = null;
       }
       if (this.activeCleanup === cleanup) {
         this.activeCleanup = null;

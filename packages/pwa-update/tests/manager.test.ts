@@ -552,4 +552,51 @@ describe('PwaUpdateManager', () => {
 
     cleanup();
   });
+
+  it('calls reg.update() from onRegisteredSW even when navigator.serviceWorker is absent in jsdom', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'serviceWorker');
+    try {
+      Reflect.deleteProperty(navigator, 'serviceWorker');
+      expect('serviceWorker' in navigator).toBe(false);
+
+      const reg = createMockRegistration({ active: createMockWorker('activated') });
+      reg.update = vi.fn().mockImplementation(async () => {
+        reg.waiting = createMockWorker('installed');
+      });
+
+      const manager = createTrackedManager();
+      manager.register(
+        vi.fn((options) => {
+          options?.onRegisteredSW?.('/sw.js', reg as unknown as ServiceWorkerRegistration);
+          return vi.fn().mockResolvedValue(undefined);
+        })
+      );
+
+      const res = await manager.checkForUpdates();
+      expect(reg.update).toHaveBeenCalledTimes(1);
+      expect(res).toBe('update_available');
+      expect(manager.getSnapshot().needRefresh).toBe(true);
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(navigator, 'serviceWorker', descriptor);
+      }
+    }
+  });
+
+  it('cancels pending fallback reload timers when register cleanup runs', async () => {
+    vi.useFakeTimers();
+    const onReload = vi.fn();
+    const manager = createTrackedManager({
+      reloadFallbackMs: 500,
+      onReload,
+    });
+    const cleanup = manager.register(vi.fn(() => vi.fn().mockResolvedValue(undefined)));
+
+    await manager.applyUpdate();
+    expect(onReload).not.toHaveBeenCalled();
+
+    cleanup();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(onReload).not.toHaveBeenCalled();
+  });
 });
