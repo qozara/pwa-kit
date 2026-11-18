@@ -1,0 +1,34 @@
+{
+  "name": "@qozara/pwa-vite",
+  "version": "1.0.0",
+  "description": "Vite plugin for build-time git version injection, no-cache version.json manifest emission, and Workbox/Vercel caching helpers.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qozara/pwa-kit.git",
+    "directory": "packages/pwa-vite"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "vite": ">=5.0.0 <8.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "check": "tsc --noEmit -p ../../tsconfig.json"
+  },
+  "license": "MIT"
+}

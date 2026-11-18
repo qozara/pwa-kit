@@ -1,0 +1,55 @@
+name: Publish to NPM
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Trusted Publishing
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Publish Vite Plugin Package
+        run: |
+          cd packages/pwa-vite
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED=$(npm view @qozara/pwa-vite@$LOCAL_VERSION version 2>/dev/null || echo "")
+          if [ -z "$PUBLISHED" ]; then
+            echo "Publishing @qozara/pwa-vite@$LOCAL_VERSION..."
+            npm publish --provenance --access public
+          else
+            echo "Version $LOCAL_VERSION is already published. Skipping."
+          fi
+
+      - name: Publish PWA Update Package
+        run: |
+          cd packages/pwa-update
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED=$(npm view @qozara/pwa-update@$LOCAL_VERSION version 2>/dev/null || echo "")
+          if [ -z "$PUBLISHED" ]; then
+            echo "Publishing @qozara/pwa-update@$LOCAL_VERSION..."
+            npm publish --provenance --access public
+          else
+            echo "Version $LOCAL_VERSION is already published. Skipping."
+          fi

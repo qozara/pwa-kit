@@ -1,0 +1,34 @@
+{
+  "name": "@qozara/pwa-update",
+  "version": "1.0.0",
+  "description": "Framework-agnostic dual-layer PWA update manager (Service Worker + network version.json + iOS standalone recovery) with React 18/19 hooks and optional UI components.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qozara/pwa-kit.git",
+    "directory": "packages/pwa-update"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "check": "tsc --noEmit -p ../../tsconfig.json"
+  },
+  "license": "MIT"
+}
